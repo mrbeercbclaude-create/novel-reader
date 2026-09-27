@@ -19,6 +19,8 @@ function stripChatNotes(lines: string[]): string[] {
     if (inNotes && !HEADING.test(value)) continue;
     inNotes = false;
     if (/^\[ยังไม่จบบท/.test(value)) continue;
+    // Commands the user typed to ChatGPT, picked up by a select-all copy.
+    if (/^(ต่อ|เริ่มเขียน)$/.test(value)) continue;
     kept.push(line);
   }
   return kept;
@@ -35,8 +37,12 @@ export function splitText(text: string): Draft[] {
     }
   });
 
-  if (!starts.length) return [{ title: 'บทที่ 1', text: text.trim() }];
-  if (lines.slice(0, starts[0].index).join('\n').trim()) {
+  if (!starts.length) {
+    return [{ title: 'บทที่ 1', text: toParagraphs(lines.join('\n').trim()) }];
+  }
+  // A short line or two before the first chapter is chat chatter, not a prologue.
+  const intro = lines.slice(0, starts[0].index).join('\n').trim();
+  if (intro.length > MIN_PROLOGUE_CHARS) {
     starts.unshift({ index: 0, title: 'บทนำ' });
   }
 
@@ -45,7 +51,16 @@ export function splitText(text: string): Draft[] {
     const end = starts[index + 1]?.index;
     return {
       title: item.title,
-      text: lines.slice(firstLine, end).join('\n').trim(),
+      text: toParagraphs(lines.slice(firstLine, end).join('\n').trim()),
     };
   }).filter(chapter => chapter.text);
+}
+
+const MIN_PROLOGUE_CHARS = 300;
+
+// Copying from a chat window drops the blank lines between paragraphs.
+// When a chapter has none at all, treat every line as its own paragraph.
+function toParagraphs(text: string): string {
+  if (/\n\s*\n/.test(text)) return text;
+  return text.replace(/\n+/g, '\n\n');
 }
