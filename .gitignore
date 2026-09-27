@@ -1,0 +1,20 @@
+# Local environment and generated files
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+
+# Private novel backups and exports
+/backups/
+/exports/
+*-export*.json
+*-backup*.json
+
+# Private third-party design references
+design-ref/
+
+# Local editor files
+.vscode/
+.idea/

@@ -1,0 +1,41 @@
+@font-face {
+  font-family: 'Noto Sans Thai';
+  src: url('/fonts/NotoSansThai.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Serif Thai';
+  src: url('/fonts/NotoSerifThai.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sarabun';
+  src: url('/fonts/Sarabun-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sarabun';
+  src: url('/fonts/Sarabun-SemiBold.ttf') format('truetype');
+  font-weight: 600 700;
+  font-display: swap;
+}
+:root {
+  --accent: #20877f;
+  --accent-soft: #edf6f4;
+  --text: #191d1d;
+  --secondary: #707777;
+  --line: #e6e9e8;
+  --surface: #ffffff;
+  --canvas: #f4f5f5;
+  --page-width: 760px;
+  --ui-font: 'Noto Sans Thai', sans-serif;
+  font-family: var(--ui-font);
+  color: var(--text);
+  background: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+

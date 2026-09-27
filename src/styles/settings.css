@@ -1,0 +1,225 @@
+.view-settings {
+  background: var(--canvas);
+}
+.settings-screen .page-header {
+  padding-bottom: 24px;
+}
+.settings-content {
+  padding: 0 16px 24px;
+}
+.settings-content h2 {
+  margin: 22px 4px 12px;
+  color: var(--secondary);
+  font-size: 15px;
+  font-weight: 400;
+}
+.settings-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 14px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 66px;
+  padding: 15px 18px;
+  text-align: left;
+  font-size: 17px;
+  border-bottom: 1px solid var(--line);
+}
+.settings-row:last-child {
+  border-bottom: 0;
+}
+.settings-row > span {
+  flex: 1;
+}
+.settings-row small {
+  color: var(--secondary);
+  font-size: 15px;
+}
+.settings-row .icon {
+  color: #919a97;
+  width: 20px;
+}
+.settings-note {
+  padding: 0 4px;
+  margin-top: 12px;
+  color: var(--secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+input.switch {
+  appearance: none;
+  width: 48px;
+  min-height: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: #d8dddb;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+}
+input.switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  height: 22px;
+  width: 22px;
+  border-radius: 50%;
+  background: white;
+}
+input.switch:checked {
+  background: var(--accent);
+}
+input.switch:checked::before {
+  left: 23px;
+}
+.appearance-controls {
+  padding: 8px 20px 24px;
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0 24px;
+}
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.control-label output {
+  color: var(--secondary);
+  font-size: 15px;
+}
+.size-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 54px;
+  gap: 8px;
+}
+.size-controls button {
+  min-height: 46px;
+  border: 1px solid #d3d9d7;
+  border-radius: 8px;
+  font-size: 19px;
+}
+.size-controls button:last-child {
+  font-size: 16px;
+}
+.theme-swatches {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.theme-swatch {
+  height: 48px;
+  border: 1px solid #c7cecb;
+  border-radius: 7px;
+  position: relative;
+}
+.theme-swatch[aria-pressed='true'] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.theme-swatch .icon {
+  width: 13px;
+  height: 13px;
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  color: var(--accent);
+}
+.swatch-light {
+  background: white;
+  color: #191d1d;
+}
+.swatch-sepia {
+  background: #f3eadb;
+  color: #383229;
+}
+.swatch-dark {
+  background: #454749;
+  color: white;
+}
+.swatch-black {
+  background: black;
+  color: white;
+}
+.spacing-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid #d3d9d7;
+  border-radius: 8px;
+}
+.spacing-buttons button {
+  min-height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-right: 1px solid #d3d9d7;
+}
+.spacing-buttons button:last-child {
+  border-right: 0;
+}
+.spacing-buttons button[aria-pressed='true'] {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-radius: 7px;
+}
+.line-sample {
+  width: 34px;
+  display: grid;
+  gap: 4px;
+}
+.line-sample i {
+  display: block;
+  height: 1px;
+  background: currentColor;
+}
+.spacing-1 {
+  gap: 7px;
+}
+.spacing-2 {
+  gap: 10px;
+}
+.advanced-settings {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.advanced-settings summary {
+  cursor: pointer;
+  display: list-item;
+  padding: 10px 0;
+}
+.help-copy {
+  padding: 20px;
+  line-height: 1.9;
+}
+
+
+.backup-reminder {
+  margin: 16px 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 15px;
+}
+.backup-reminder p { margin: 0; }
+.backup-upload { position: relative; cursor: pointer; }
+.backup-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.backup-upload:focus-within { outline: 2px solid var(--accent); }
+.restore-options { padding: 8px 20px 24px; }
+.restore-options button { width: 100%; }
+.backup-download { margin-top: 12px; text-decoration: none; }

@@ -1,0 +1,133 @@
+.detail-intro {
+  background: #171b1b;
+  color: white;
+}
+.detail-cover-wrap {
+  position: relative;
+}
+.cover-hero {
+  aspect-ratio: auto;
+  height: 390px;
+  border-radius: 0;
+}
+.cover-hero .cover-type {
+  padding: 70px 30px 45px;
+}
+.cover-hero .cover-type strong {
+  font-size: 34px;
+  max-width: 440px;
+}
+.cover-hero .cover-type span {
+  font-size: 17px;
+}
+.cover-hero.has-image::after {
+  content: '';
+  position: absolute;
+  inset: 55% 0 0;
+  background: linear-gradient(to bottom, transparent, #171b1b);
+}
+.detail-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+}
+.detail-toolbar .icon-button {
+  color: #191d1d;
+  background: white;
+  border-radius: 50%;
+}
+.detail-metadata {
+  padding: 22px 24px 30px;
+}
+.detail-metadata h1 {
+  font-size: 28px;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+.detail-count {
+  color: #80c6bd;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.detail-author {
+  font-size: 17px;
+  margin-bottom: 14px;
+}
+.detail-description {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #d1d6d4;
+  white-space: pre-wrap;
+}
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+.detail-actions button {
+  flex: 1;
+  border-radius: 24px;
+}
+.detail-actions .outline-button {
+  color: white;
+}
+.detail-chapters {
+  padding: 8px 20px 24px;
+}
+.chapter-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.chapter-row > button:first-child {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  flex: 1;
+  padding: 17px 0;
+  min-width: 0;
+}
+.chapter-number {
+  color: var(--accent);
+  min-width: 24px;
+}
+.chapter-row .icon-button {
+  color: var(--secondary);
+}
+.detail-management {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+}
+.editor-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor-form .primary-button {
+  align-self: flex-end;
+  min-width: 130px;
+}
+.cover-upload {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
