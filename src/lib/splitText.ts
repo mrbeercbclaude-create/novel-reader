@@ -3,13 +3,34 @@ export type Draft = {
   text: string;
 };
 
+const HEADING = /^(บทที่|ตอนที่|chapter\s+\d+|#\s+\S)/i;
+
+// Text copied straight from a ChatGPT chat can carry the writer's continuity
+// notes and "part 1 of 2" markers. Drop them so only the story is imported.
+function stripChatNotes(lines: string[]): string[] {
+  const kept: string[] = [];
+  let inNotes = false;
+  for (const line of lines) {
+    const value = line.trim();
+    if (value.includes('บันทึกความต่อเนื่อง')) {
+      inNotes = true;
+      continue;
+    }
+    if (inNotes && !HEADING.test(value)) continue;
+    inNotes = false;
+    if (/^\[ยังไม่จบบท/.test(value)) continue;
+    kept.push(line);
+  }
+  return kept;
+}
+
 export function splitText(text: string): Draft[] {
-  const lines = text.replace(/\r/g, '').split('\n');
+  const lines = stripChatNotes(text.replace(/\r/g, '').split('\n'));
   const starts: { index: number; title: string }[] = [];
 
   lines.forEach((line, index) => {
     const value = line.trim();
-    if (/^(บทที่|ตอนที่|chapter\s+\d+|#\s+\S)/i.test(value)) {
+    if (HEADING.test(value)) {
       starts.push({ index, title: value.replace(/^#\s*/, '') });
     }
   });
