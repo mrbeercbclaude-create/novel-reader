@@ -39,9 +39,18 @@ export type Board = {
   novelId: string;
   name: string;
   order: number;
-  image: Blob;
+  // Raw bytes, not a Blob: iOS Safari can hand back Blobs from IndexedDB that
+  // no longer load as images after the page reopens them.
+  image: ArrayBuffer | Blob;
+  imageType?: string;
   createdAt: number;
 };
+
+export function boardBlob(board: Board): Blob {
+  return board.image instanceof Blob
+    ? board.image
+    : new Blob([board.image], { type: board.imageType || 'image/png' });
+}
 class ReaderDB extends Dexie {
   novels!: Table<Novel, string>;
   chapters!: Table<Chapter, string>;

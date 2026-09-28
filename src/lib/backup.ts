@@ -1,4 +1,4 @@
-import { db, makeId, type Novel, type Chapter } from '../db';
+import { boardBlob, db, makeId, type Novel, type Chapter } from '../db';
 import { readLibrary } from './dbHelpers';
 import type { BackupData } from './backupFormat';
 
@@ -28,7 +28,7 @@ export async function exportLibrary() {
   );
   const boards = await Promise.all(storedBoards.map(async board => ({
     novelId: board.novelId, name: board.name, order: board.order,
-    createdAt: board.createdAt, data: await encode(board.image),
+    createdAt: board.createdAt, data: await encode(boardBlob(board)),
   })));
   const preferences = stored.filter(item => typeof item.value === 'string');
   const covers = await Promise.all(stored
@@ -53,7 +53,8 @@ export function exportNovel(novel: Novel, chapters: Chapter[]) {
   download(new Blob(['\uFEFF', text], { type: 'text/plain;charset=utf-8' }), filename + '.txt');
 }
 
-export async function restoreLibrary(data: BackupData, mode: 'merge' | 'replace') {
+export async function restoreLibrary(backup: BackupData, mode: 'merge' | 'replace') {
+  const data = await boardsAsBytes(backup);
   const novelIds = new Map(data.novels.map(item => [item.id, makeId()]));
   const chapterIds = new Map(data.chapters.map(item => [item.id, makeId()]));
   const positions = <T extends { novelId: string; chapterId: string }>(item: T): T => ({
@@ -79,4 +80,14 @@ export async function restoreLibrary(data: BackupData, mode: 'merge' | 'replace'
       ...item, id: makeId(), novelId: novelIds.get(item.novelId)!,
     })));
   });
+}
+
+// Runs before the restore transaction: reading Blob bytes is async and would
+// otherwise let the IndexedDB transaction auto-commit early.
+async function boardsAsBytes(data: BackupData): Promise<BackupData> {
+  const boards = await Promise.all(data.boards.map(async item => {
+    const blob = boardBlob({ ...item, id: '' });
+    return { ...item, image: await blob.arrayBuffer(), imageType: blob.type };
+  }));
+  return { ...data, boards };
 }

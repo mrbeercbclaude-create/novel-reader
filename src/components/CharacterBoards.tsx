@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { db, makeId, type Board, type Novel } from '../db';
+import { boardBlob, db, makeId, type Board, type Novel } from '../db';
 import { BOARD_MAX_WIDTH, resizeImage } from '../lib/covers';
 import { useApp } from './AppContext';
 import { Icon } from './Icon';
@@ -13,7 +13,7 @@ export function loadBoards(novelId: string) {
 
 function useObjectUrls(boards: Board[]) {
   const urls = useMemo(
-    () => Object.fromEntries(boards.map(board => [board.id, URL.createObjectURL(board.image)])),
+    () => Object.fromEntries(boards.map(board => [board.id, URL.createObjectURL(boardBlob(board))])),
     [boards],
   );
   useEffect(() => () => Object.values(urls).forEach(url => URL.revokeObjectURL(url)), [urls]);
@@ -50,12 +50,14 @@ export function CharacterBoards({ novel, onClose, onChange }: {
     const last = boards.length ? boards[boards.length - 1].order : -1;
     const images = [];
     for (const file of files) images.push(await resizeImage(file, BOARD_MAX_WIDTH));
+    const buffers = await Promise.all(images.map(image => image.arrayBuffer()));
     await db.boards.bulkAdd(images.map((image, index) => ({
       id: makeId(),
       novelId: novel.id,
       name: nameFromFile(files[index]),
       order: last + 1 + index,
-      image,
+      image: buffers[index],
+      imageType: image.type,
       createdAt: Date.now(),
     })));
     await refresh();
