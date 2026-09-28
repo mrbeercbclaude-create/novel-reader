@@ -23,16 +23,20 @@ function encode(blob: Blob): Promise<string> {
 }
 
 export async function exportLibrary() {
-  const [novels, chapters, progress, bookmarks, stored] = await db.transaction(
+  const [novels, chapters, progress, bookmarks, stored, storedBoards] = await db.transaction(
     'r', db.tables, readLibrary,
   );
+  const boards = await Promise.all(storedBoards.map(async board => ({
+    novelId: board.novelId, name: board.name, order: board.order,
+    createdAt: board.createdAt, data: await encode(board.image),
+  })));
   const preferences = stored.filter(item => typeof item.value === 'string');
   const covers = await Promise.all(stored
     .filter(item => item.key.startsWith('cover:') && item.value instanceof Blob)
     .map(async item => ({ novelId: item.key.slice(6), data: await encode(item.value as Blob) })));
   const content = JSON.stringify({
     format: 'aan-plearn', version: 1, exportedAt: Date.now(),
-    novels, chapters, progress, bookmarks, preferences, covers,
+    novels, chapters, progress, bookmarks, preferences, covers, boards,
   });
   const blob = new Blob([content], { type: 'application/json' });
   if (blob.size > 150 * 1024 * 1024) {
@@ -71,5 +75,8 @@ export async function restoreLibrary(data: BackupData, mode: 'merge' | 'replace'
     await db.progress.bulkAdd(data.progress.map(positions));
     await db.bookmarks.bulkAdd(data.bookmarks.map(item => ({ ...positions(item), id: makeId() })));
     await db.preferences.bulkPut(preferences);
+    await db.boards.bulkAdd(data.boards.map(item => ({
+      ...item, id: makeId(), novelId: novelIds.get(item.novelId)!,
+    })));
   });
 }

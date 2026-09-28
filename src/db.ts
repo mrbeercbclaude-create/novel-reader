@@ -34,12 +34,21 @@ export type Preference = {
   key: string;
   value: string | Blob;
 };
+export type Board = {
+  id: string;
+  novelId: string;
+  name: string;
+  order: number;
+  image: Blob;
+  createdAt: number;
+};
 class ReaderDB extends Dexie {
   novels!: Table<Novel, string>;
   chapters!: Table<Chapter, string>;
   progress!: Table<Progress, string>;
   bookmarks!: Table<Bookmark, string>;
   preferences!: Table<Preference, string>;
+  boards!: Table<Board, string>;
   constructor() {
     super('aan-plearn');
     this.version(1).stores({
@@ -48,6 +57,9 @@ class ReaderDB extends Dexie {
       progress: 'novelId, chapterId',
       bookmarks: 'id, novelId, chapterId',
       preferences: 'key'
+    });
+    this.version(2).stores({
+      boards: 'id, novelId, [novelId+order]'
     });
   }
 }

@@ -131,3 +131,109 @@
   align-items: center;
 }
 
+.detail-boards {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 24px;
+  color: white;
+}
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.board-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 15px;
+  color: inherit;
+}
+.board-tile img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.board-tile span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-add {
+  width: 100%;
+  margin-top: 16px;
+}
+.board-viewer {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #111414;
+  color: white;
+  animation: sheet-fade 160ms ease-out;
+}
+.board-viewer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+header.board-viewer-bar {
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+footer.board-viewer-bar {
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+.board-viewer-bar h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-viewer-bar > span {
+  font-size: 14px;
+  color: #aab3b1;
+}
+.board-viewer .icon-button {
+  color: white;
+}
+.board-viewer .icon-button:disabled {
+  opacity: 0.3;
+}
+.board-viewer-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.board-viewer-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+}
+.board-viewer-stage.zoomed {
+  display: block;
+  overflow: auto;
+}
+.board-viewer-stage.zoomed img {
+  max-width: none;
+  max-height: none;
+  width: 200%;
+  cursor: zoom-out;
+}

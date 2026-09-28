@@ -8,6 +8,7 @@ export function readLibrary() {
     db.progress.toArray(),
     db.bookmarks.toArray(),
     db.preferences.toArray(),
+    db.boards.toArray(),
   ]);
 }
 
@@ -54,8 +55,9 @@ export async function importChapters(
 export async function removeNovel(novel: Novel) {
   await db.transaction(
     'rw',
-    [db.novels, db.chapters, db.progress, db.bookmarks, db.preferences],
+    [db.novels, db.chapters, db.progress, db.bookmarks, db.preferences, db.boards],
     async () => {
+      await db.boards.where('novelId').equals(novel.id).delete();
       await db.novels.delete(novel.id);
       await db.chapters.where('novelId').equals(novel.id).delete();
       await db.progress.delete(novel.id);

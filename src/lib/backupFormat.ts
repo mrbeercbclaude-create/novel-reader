@@ -1,4 +1,5 @@
-import type { Bookmark, Chapter, Novel, Preference, Progress } from '../db';
+import type { Board, Bookmark, Chapter, Novel, Preference, Progress } from '../db';
+import { BOARD_MAX_WIDTH, COVER_MAX_WIDTH } from './covers';
 import { defaults } from './preferences';
 
 export type BackupData = {
@@ -7,6 +8,7 @@ export type BackupData = {
   progress: Progress[];
   bookmarks: Bookmark[];
   preferences: Preference[];
+  boards: Omit<Board, 'id'>[];
 };
 
 type Row = Record<string, unknown>;
@@ -108,17 +110,31 @@ export async function parseBackup(file: File): Promise<BackupData> {
   for (const item of list(data.covers, 5000)) {
     const novelId = id(item.novelId);
     if (!novelIds.has(novelId)) invalid();
-    const encoded = str(item.data, 30 * 1024 * 1024);
-    const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(encoded);
-    if (!match) invalid();
-    const bytes = Uint8Array.from(atob(match[2]), character => character.charCodeAt(0));
-    const blob = new Blob([bytes], { type: match[1] });
-    const bitmap = await createImageBitmap(blob);
-    const valid = bitmap.width <= 900 && bitmap.height <= 9000;
-    bitmap.close();
-    if (!valid) invalid();
-    preferences.push({ key: 'cover:' + novelId, value: blob });
+    preferences.push({ key: 'cover:' + novelId, value: await image(item.data, COVER_MAX_WIDTH) });
   }
   unique(preferences.map(item => item.key));
-  return { novels, chapters, progress, bookmarks, preferences };
+  // Backups made before character boards existed have no "boards" field.
+  const boards: BackupData['boards'] = [];
+  for (const item of data.boards === undefined ? [] : list(data.boards, 20000)) {
+    const novelId = id(item.novelId);
+    if (!novelIds.has(novelId)) invalid();
+    boards.push({
+      novelId, name: str(item.name, 200), order: num(item.order, 1000000),
+      createdAt: num(item.createdAt), image: await image(item.data, BOARD_MAX_WIDTH),
+    });
+  }
+  return { novels, chapters, progress, bookmarks, preferences, boards };
+}
+
+async function image(value: unknown, maxWidth: number): Promise<Blob> {
+  const encoded = str(value, 30 * 1024 * 1024);
+  const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(encoded);
+  if (!match) invalid();
+  const bytes = Uint8Array.from(atob(match[2]), character => character.charCodeAt(0));
+  const blob = new Blob([bytes], { type: match[1] });
+  const bitmap = await createImageBitmap(blob);
+  const valid = bitmap.width <= maxWidth && bitmap.height <= 9000;
+  bitmap.close();
+  if (!valid) invalid();
+  return blob;
 }

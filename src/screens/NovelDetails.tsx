@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { CharacterBoards, loadBoards } from '../components/CharacterBoards';
 import { useApp } from '../components/AppContext';
 import { Cover } from '../components/Cover';
 import { Icon } from '../components/Icon';
@@ -14,6 +15,11 @@ export function NovelDetails() {
   } = useApp();
   const [editing, setEditing] = useState(false);
   const [editChapter, setEditChapter] = useState<Chapter | null>(null);
+  const [showBoards, setShowBoards] = useState(false);
+  const [boardCount, setBoardCount] = useState(0);
+  useEffect(() => {
+    if (activeNovel) void loadBoards(activeNovel.id).then(list => setBoardCount(list.length));
+  }, [activeNovel?.id]);
   if (!activeNovel) return null;
   const novel = activeNovel;
 
@@ -53,6 +59,9 @@ export function NovelDetails() {
               <Icon name="plus" />เพิ่มบท
             </button>
           </div>
+          <button className="outline-button detail-boards" onClick={() => setShowBoards(true)}>
+            <Icon name="image" />ตัวละคร{boardCount ? ' (' + boardCount + ')' : ''}
+          </button>
         </div>
       </div>
       <div className="detail-chapters">
@@ -85,6 +94,10 @@ export function NovelDetails() {
         </div>
       </div>
       {editing && <NovelEditor novel={novel} onClose={() => setEditing(false)} />}
+      {showBoards && (
+        <CharacterBoards novel={novel} onClose={() => setShowBoards(false)}
+          onChange={setBoardCount} />
+      )}
       {editChapter && (
         <ChapterEditor chapter={editChapter} onClose={() => setEditChapter(null)} />
       )}
