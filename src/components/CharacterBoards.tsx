@@ -99,7 +99,8 @@ export function CharacterBoards({ novel, onClose, onChange }: {
         <div className="board-grid">
           {boards.map((board, index) => (
             <button className="board-tile" key={board.id} onClick={() => setViewing(index)}>
-              <img src={urls[board.id]} alt={board.name || 'character board'} loading="lazy" />
+              <img src={urls[board.id]}
+                alt={board.name || 'character board'} decoding="async" />
               <span>{board.name || 'ไม่มีชื่อ'}</span>
             </button>
           ))}
