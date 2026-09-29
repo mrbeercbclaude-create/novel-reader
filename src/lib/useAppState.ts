@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { db, makeId, type Bookmark, type Chapter, type Novel, type Progress } from '../db';
+import {
+  db, makeId, type Bookmark, type Chapter, type Novel, type Progress, type ReadingPosition,
+} from '../db';
 import { defaults, type PreferenceKey, type Preferences } from './preferences';
 import { readLibrary } from './dbHelpers';
 import { resizeCover } from './covers';
 
 export type View = 'library' | 'reading' | 'settings' | 'details' | 'reader';
-export type ReadingTarget = { chapterId: string; scrollTop: number; requestId: number };
+export type ReadingTarget = ReadingPosition & { chapterId: string; requestId: number };
 
 export function useAppState() {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -69,7 +71,7 @@ export function useAppState() {
     window.scrollTo(0, 0);
   };
 
-  const startReader = (novel: Novel, chapter?: Chapter, scrollTop?: number) => {
+  const startReader = (novel: Novel, chapter?: Chapter, position?: number | ReadingPosition) => {
     const list = allChapters
       .filter(item => item.novelId === novel.id)
       .sort((a, b) => a.order - b.order);
@@ -81,9 +83,13 @@ export function useAppState() {
     }
     setActiveNovelId(novel.id);
     setActiveChapterId(chosen.id);
+    const target: ReadingPosition = typeof position === 'number' ? { scrollTop: position } : position
+      ?? (chosen.id === saved?.chapterId ? saved : { scrollTop: 0 });
     setReadingTarget({
       chapterId: chosen.id,
-      scrollTop: scrollTop ?? (chosen.id === saved?.chapterId ? saved.scrollTop : 0),
+      scrollTop: target.scrollTop,
+      paragraphIndex: target.paragraphIndex,
+      paragraphProgress: target.paragraphProgress,
       requestId: Date.now(),
     });
     setView('reader');
@@ -126,10 +132,10 @@ export function useAppState() {
     });
   };
 
-  const toggleBookmark = async (scrollTop: number) => {
+  const toggleBookmark = async (position: ReadingPosition, bookmarkId?: string) => {
     if (!activeNovel || !activeChapter) return;
     const current = bookmarks.find(bookmark => bookmark.chapterId === activeChapter.id
-      && Math.abs(bookmark.scrollTop - scrollTop) < 80);
+      && bookmark.id === bookmarkId);
     if (current) {
       if (!confirm('ลบบุ๊กมาร์กนี้?')) return;
       await db.bookmarks.delete(current.id);
@@ -138,7 +144,9 @@ export function useAppState() {
         id: makeId(),
         novelId: activeNovel.id,
         chapterId: activeChapter.id,
-        scrollTop,
+        scrollTop: position.scrollTop,
+        paragraphIndex: position.paragraphIndex,
+        paragraphProgress: position.paragraphProgress,
         label: activeChapter.title,
         createdAt: Date.now(),
       });

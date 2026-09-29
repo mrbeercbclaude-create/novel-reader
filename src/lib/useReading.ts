@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useApp } from '../components/AppContext';
-import type { Progress } from '../db';
+import type { Progress, ReadingPosition } from '../db';
+import {
+  captureReadingPosition, hasParagraph, measureReadingLayout, readingScrollTop,
+  type ReadingLayout,
+} from './readingPosition';
 
 export function useReading(playing = false) {
   const {
@@ -11,25 +15,10 @@ export function useReading(playing = false) {
   const ready = useRef(false);
   const timer = useRef<number>();
   const lastSave = useRef(0);
+  const layout = useRef<ReadingLayout | null>(null);
+  const controls = useRef({ capture: () => {}, reflow: () => {} });
   const [percent, setPercent] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
-
-  function capture() {
-    const element = readerRef.current;
-    if (!ready.current || !element || !activeNovel || !activeChapter) return;
-    const distance = element.scrollHeight - element.clientHeight;
-    const fraction = distance > 0 ? element.scrollTop / distance : 1;
-    const current = Math.min(100, Math.max(0, Math.round(fraction * 100)));
-    positionRef.current = {
-      novelId: activeNovel.id,
-      chapterId: activeChapter.id,
-      scrollTop: element.scrollTop,
-      percent: current,
-      updatedAt: Date.now(),
-    };
-    setPercent(current);
-    setScrollTop(element.scrollTop);
-  }
 
   function save() {
     window.clearTimeout(timer.current);
@@ -39,31 +28,101 @@ export function useReading(playing = false) {
   }
 
   function onScroll() {
-    capture();
+    controls.current.capture();
+    if (!ready.current) return;
     if (Date.now() - lastSave.current >= 1000) save();
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(save, 250);
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const element = readerRef.current;
+    const article = element?.querySelector<HTMLElement>('.chapter-content');
+    if (!element || !article || !activeNovel || !activeChapter) return;
+    const novelId = activeNovel.id;
+    const chapterId = activeChapter.id;
     let disposed = false;
     let frame = 0;
+    let revision = 0;
+    let lastCapturedTop = -1;
     ready.current = false;
     positionRef.current = null;
+    layout.current = null;
     setPercent(0);
     setScrollTop(0);
 
-    void document.fonts.ready.then(() => {
-      if (disposed) return;
+    function changed() {
+      const previous = layout.current;
+      return !previous || previous.width !== element!.clientWidth
+        || previous.height !== element!.clientHeight
+        || previous.contentHeight !== article!.offsetHeight;
+    }
+
+    function capture(preserved?: ReadingPosition) {
+      if (!layout.current) return;
+      const distance = element!.scrollHeight - element!.clientHeight;
+      const current = Math.min(100, Math.max(0,
+        Math.round((distance > 0 ? element!.scrollTop / distance : 1) * 100)));
+      const position = preserved ?? captureReadingPosition(element!.scrollTop, layout.current);
+      positionRef.current = {
+        novelId, chapterId, scrollTop: element!.scrollTop,
+        paragraphIndex: position.paragraphIndex,
+        paragraphProgress: position.paragraphProgress,
+        percent: current, updatedAt: Date.now(),
+      };
+      lastCapturedTop = element!.scrollTop;
+      setPercent(current);
+      setScrollTop(element!.scrollTop);
+    }
+
+    function reflow() {
+      // Freeze the last logical position before resize/font-induced scroll events can overwrite it.
+      ready.current = false;
+      window.clearTimeout(timer.current);
+      const target: ReadingPosition = positionRef.current ?? readingTarget ?? { scrollTop: 0 };
+      const requested = ++revision;
+      cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const element = readerRef.current;
-        if (!element || disposed) return;
-        element.scrollTop = readingTarget?.scrollTop || 0;
-        ready.current = true;
-        capture();
-        save();
+        // Resolve styles first so fonts newly selected in Appearance are included in fonts.ready.
+        void article!.offsetHeight;
+        void document.fonts.ready.then(() => {
+          if (disposed || requested !== revision) return;
+          frame = requestAnimationFrame(() => {
+            if (disposed || requested !== revision) return;
+            layout.current = measureReadingLayout(element!);
+            element!.scrollTop = readingScrollTop(target, layout.current);
+            // Retain the anchor even when a shorter viewport/content clamps scrollTop.
+            // Legacy pixels are converted only after they have actually been restored.
+            const validAnchor = hasParagraph(target)
+              && layout.current.paragraphs[target.paragraphIndex!];
+            capture(validAnchor ? target : undefined);
+            ready.current = true;
+            save();
+          });
+        });
       });
+    }
+
+    controls.current = {
+      reflow,
+      capture: () => {
+        if (!ready.current) return;
+        if (changed()) {
+          reflow();
+          return;
+        }
+        // Ignore the scroll event generated by our own restoration (including rounding/clamping).
+        if (element.scrollTop !== lastCapturedTop) capture();
+      },
+    };
+    reflow();
+    const observer = new ResizeObserver(() => {
+      if (ready.current && changed()) reflow();
     });
+    observer.observe(element);
+    observer.observe(article);
+    window.addEventListener('resize', reflow);
+    document.fonts.addEventListener('loadingdone', reflow);
 
     function visibility() {
       if (document.visibilityState === 'hidden') save();
@@ -76,10 +135,31 @@ export function useReading(playing = false) {
       cancelAnimationFrame(frame);
       save();
       ready.current = false;
+      controls.current = { capture: () => {}, reflow: () => {} };
+      observer.disconnect();
+      window.removeEventListener('resize', reflow);
+      document.fonts.removeEventListener('loadingdone', reflow);
       window.removeEventListener('pagehide', save);
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [activeChapter?.id, readingTarget?.requestId]);
+
+  useLayoutEffect(() => {
+    controls.current.reflow();
+  }, [prefs.font, prefs.size, prefs.line, prefs.spacing, prefs.margin, prefs.align]);
+
+  function getPosition() {
+    controls.current.capture();
+    return positionRef.current;
+  }
+
+  function isAtPosition(position: ReadingPosition) {
+    const element = readerRef.current;
+    if (!element || !layout.current) return false;
+    const top = Math.min(element.scrollHeight - element.clientHeight,
+      readingScrollTop(position, layout.current));
+    return Math.abs(top - scrollTop) < 80;
+  }
 
   useEffect(() => {
     let lock: WakeLockSentinel | null = null;
@@ -107,5 +187,5 @@ export function useReading(playing = false) {
     };
   }, [prefs.awake, playing]);
 
-  return { readerRef, percent, scrollTop, onScroll, save };
+  return { readerRef, ready, percent, onScroll, save, getPosition, isAtPosition };
 }

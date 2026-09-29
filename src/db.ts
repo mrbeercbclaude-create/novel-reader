@@ -15,18 +15,23 @@ export type Chapter = {
   title: string;
   text: string;
 };
-export type Progress = {
+// Optional, non-indexed fields: existing IndexedDB rows and v1 backups remain valid.
+// Keep scrollTop for legacy readers and for positions before the story starts.
+export type ReadingPosition = {
+  scrollTop: number;
+  paragraphIndex?: number;
+  paragraphProgress?: number; // Fraction of the paragraph height, from 0 to 1.
+};
+export type Progress = ReadingPosition & {
   novelId: string;
   chapterId: string;
-  scrollTop: number;
   percent: number;
   updatedAt: number;
 };
-export type Bookmark = {
+export type Bookmark = ReadingPosition & {
   id: string;
   novelId: string;
   chapterId: string;
-  scrollTop: number;
   label: string;
   createdAt: number;
 };

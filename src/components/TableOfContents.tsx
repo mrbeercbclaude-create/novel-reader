@@ -49,7 +49,7 @@ export function TableOfContents({ onClose, beforeNavigate }: {
             const chapter = chapters.find(item => item.id === bookmark.chapterId);
             if (chapter) {
               beforeNavigate();
-              startReader(novel, chapter, bookmark.scrollTop);
+              startReader(novel, chapter, bookmark);
               onClose();
             }
           }}>
@@ -65,4 +65,3 @@ export function TableOfContents({ onClose, beforeNavigate }: {
     </Sheet>
   );
 }
-

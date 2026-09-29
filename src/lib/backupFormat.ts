@@ -82,7 +82,11 @@ export async function parseBackup(file: File): Promise<BackupData> {
     const novelId = id(item.novelId);
     const chapterId = id(item.chapterId);
     if (!novelIds.has(novelId) || chapterMap.get(chapterId)?.novelId !== novelId) invalid();
-    return { novelId, chapterId, scrollTop: num(item.scrollTop, 1000000000) };
+    const base = { novelId, chapterId, scrollTop: num(item.scrollTop, 1000000000) };
+    if (item.paragraphIndex === undefined && item.paragraphProgress === undefined) return base;
+    const paragraphIndex = num(item.paragraphIndex, 2000000);
+    if (!Number.isInteger(paragraphIndex)) invalid();
+    return { ...base, paragraphIndex, paragraphProgress: num(item.paragraphProgress, 1) };
   }
   const progress = list(data.progress, 5000).map(item => ({
     ...position(item), percent: num(item.percent, 100), updatedAt: num(item.updatedAt),

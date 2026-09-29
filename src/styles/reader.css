@@ -73,6 +73,7 @@
   color: var(--accent);
 }
 .reading-area {
+  overflow-anchor: none;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;

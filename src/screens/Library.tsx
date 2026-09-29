@@ -122,7 +122,7 @@ export function Library() {
                     <div className="bookmark-row" key={bookmark.id}>
                       <button onClick={() => {
                         const chapter = allChapters.find(item => item.id === bookmark.chapterId);
-                        if (chapter) startReader(novel, chapter, bookmark.scrollTop);
+                        if (chapter) startReader(novel, chapter, bookmark);
                       }}>
                         <Icon name="bookmark" />
                         <span>{bookmark.label}</span>

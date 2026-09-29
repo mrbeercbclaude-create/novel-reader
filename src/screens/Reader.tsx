@@ -13,7 +13,7 @@ export function Reader() {
   } = useApp();
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
-  const { readerRef, percent, scrollTop, onScroll, save } = useReading(playing);
+  const { readerRef, ready, percent, onScroll, save, getPosition, isAtPosition } = useReading(playing);
   const [chrome, setChrome] = useState(true);
   const [toc, setToc] = useState(false);
   const [more, setMore] = useState(false);
@@ -23,7 +23,7 @@ export function Reader() {
     save();
   }
   useAutoScroll({
-    readerRef, playing, speed, chapterId: activeChapter?.id, pause,
+    readerRef, ready, playing, speed, chapterId: activeChapter?.id, pause,
     onEnd: () => {
       onScroll();
       save();
@@ -42,8 +42,8 @@ export function Reader() {
   const novel = activeNovel;
   const chapter = activeChapter;
   const index = chapters.findIndex(item => item.id === chapter.id);
-  const bookmarked = bookmarks.some(mark => mark.chapterId === chapter.id
-    && Math.abs(mark.scrollTop - scrollTop) < 80);
+  const bookmark = bookmarks.find(mark => mark.chapterId === chapter.id && isAtPosition(mark));
+  const bookmarked = !!bookmark;
   const minutes = Math.max(1, Math.ceil(chapter.text.replace(/\s/g, '').length
     / 650 * (1 - percent / 100)));
   const focusIndex = chrome ? 0 : -1;
@@ -83,7 +83,10 @@ export function Reader() {
           tabIndex={focusIndex} onClick={() => setShowAppearance(true)}>Aa</button>
         <button className="icon-button" aria-label="คั่นหน้าตรงนี้" aria-pressed={bookmarked}
           tabIndex={focusIndex}
-          onClick={() => void run(() => toggleBookmark(readerRef.current?.scrollTop || 0))}>
+          onClick={() => {
+            const position = getPosition();
+            if (position) void run(() => toggleBookmark(position, bookmark?.id));
+          }}>
           <Icon name="bookmark" filled={bookmarked} />
         </button>
         <button className="icon-button" aria-label="เพิ่มเติม" tabIndex={focusIndex}
