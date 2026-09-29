@@ -41,3 +41,37 @@ Ask the user before adding any other package. In that request, provide the packa
 - `npm audit` — inspect dependency advisories after installation and before release.
 
 Use the repository’s RTK command-prefix guidance when available. Do not claim a command was run unless its result was observed.
+
+## Current state (updated 2026-09-29 — read this first)
+
+Live at https://mrbeercbclaude-create.github.io/novel-reader/ . Every push to `main` deploys through `.github/workflows/deploy.yml` (GitHub Pages). The app is in daily use on an iPad and an Android phone, so a broken push breaks a real reader.
+
+Real layout (the folder tree in PLAN.md is outdated):
+
+- `src/App.tsx`, `src/main.tsx` — shell and routing.
+- `src/screens/` — `Library`, `NovelDetails`, `Reader`, `Import`, `Settings`.
+- `src/components/` — `CharacterBoards` (board sheet + full-screen viewer), `BackupControls`, `TableOfContents`, `Appearance`, `NovelEditor`, `ChapterEditor`, `Cover`, `Sheet`, `BottomNav`, `Icon`, `AppContext`.
+- `src/db.ts` — Dexie schema. Version 2 added the `boards` table. Never edit an existing version; add a new `version(n)` for schema changes.
+- `src/lib/` — `splitText` (chapter splitting and chat clean-up), `backup` + `backupFormat` (export, validation, restore), `covers` (image resize), `useAutoScroll`, `useReading`, `preferences`, `dbHelpers`.
+- `public/icons/` — app icon of the two cats (Raptor and Mika): 192, 512, maskable 512, apple-touch 180, favicon 64.
+
+Features that already work — do not rebuild them:
+
+- Import from `.txt` or pasted text. Chapters split on lines starting with `บทที่ / ตอนที่ / Chapter N / # `. Pasted ChatGPT chats are cleaned: continuity ledgers (`บันทึกความต่อเนื่อง`), `[ยังไม่จบบท…]` markers and lone `ต่อ` / `เริ่มเขียน` lines are removed.
+- Reader with themes, fonts, size, table of contents, bookmarks, saved position, auto-scroll, wake lock.
+- Covers per novel. Character boards per novel (upload several images, grid, swipe viewer, zoom, reorder, rename, delete).
+- Backup export/import as JSON, including covers and boards. Old backups without boards still import.
+
+Hard-won lessons:
+
+- iOS Safari: Blobs stored in IndexedDB can fail to load after the app is reopened. Store images as `ArrayBuffer` + MIME type (see `boardBlob()` in `src/db.ts`). Do not use `loading="lazy"` on images inside sheets.
+- The CSP blocks `fetch()` of `blob:` URLs (`connect-src 'self'`). This is intended; do not loosen the CSP to work around it.
+- Reading Blob bytes inside a Dexie transaction lets the transaction auto-commit early. Convert first, then open the transaction (see `restoreLibrary`).
+- The service worker auto-updates. Users get a new version after closing and reopening the app.
+
+Working rules:
+
+- `design-ref/` holds copyrighted screenshots used as design reference. It is git-ignored and must never be committed.
+- Before finishing any task, run `npm run build` and fix every error. Test at a 375px-wide viewport.
+- Keep user data compatible: an existing library and existing backup files must keep working after your change.
+- Commit with a clear message. Push only when the user says so.
