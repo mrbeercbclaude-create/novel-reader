@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { boardBlob, db, makeId, type Board, type Novel } from '../db';
 import { BOARD_MAX_WIDTH, resizeImage } from '../lib/covers';
+import { useBoardGestures } from '../lib/useBoardGestures';
 import { useApp } from './AppContext';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
@@ -154,10 +155,11 @@ function BoardViewer({ boards, urls, index, onIndex, onClose, onRename, onRemove
   onMove: (board: Board, step: -1 | 1) => void;
 }) {
   const board = boards[index];
-  const [zoomed, setZoomed] = useState(false);
-  const [touchX, setTouchX] = useState<number | null>(null);
+  const gestures = useBoardGestures(board.id + ':' + index, step => {
+    const next = index + step;
+    if (next >= 0 && next < boards.length) onIndex(next);
+  });
 
-  useEffect(() => setZoomed(false), [index]);
   useEffect(() => {
     function keyboard(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose();
@@ -178,20 +180,21 @@ function BoardViewer({ boards, urls, index, onIndex, onClose, onRename, onRemove
         <span>{index + 1} / {boards.length}</span>
       </header>
       <div
-        className={'board-viewer-stage' + (zoomed ? ' zoomed' : '')}
-        onTouchStart={event => setTouchX(event.touches.length === 1 ? event.touches[0].clientX : null)}
-        onTouchEnd={event => {
-          if (zoomed || touchX === null) return;
-          const distance = event.changedTouches[0].clientX - touchX;
-          if (distance > 60 && index > 0) onIndex(index - 1);
-          if (distance < -60 && index < boards.length - 1) onIndex(index + 1);
-          setTouchX(null);
-        }}
+        ref={gestures.stageRef}
+        className={'board-viewer-stage' + (gestures.zoomed ? ' zoomed' : '')}
+        onPointerDown={gestures.onPointerDown}
+        onPointerMove={gestures.onPointerMove}
+        onPointerUp={gestures.onPointerUp}
+        onPointerCancel={gestures.onPointerCancel}
+        onLostPointerCapture={gestures.onLostPointerCapture}
       >
         <img
+          ref={gestures.imageRef}
           src={urls[board.id]}
           alt={board.name || 'character board'}
-          onClick={() => setZoomed(value => !value)}
+          style={gestures.imageStyle}
+          onLoad={gestures.onLoad}
+          draggable={false}
         />
       </div>
       <footer className="board-viewer-bar">
